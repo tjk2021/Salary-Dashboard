@@ -1,3 +1,7 @@
+# Author: Tanushree Koshti
+# Project: Salary Dashboard
+# Date: February 19, 2024
+
 # ui.R
 library(shiny)
 
@@ -13,5 +17,8 @@ shinyUI(fluidPage(
   h4("Date: February 19, 2024"),
   
   # Table output for displaying data
-  tableOutput("data_table")
+  tableOutput("data_table"),
+  
+  # Visualization
+  plotOutput("bar_plot")
 ))
