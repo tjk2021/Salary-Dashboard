@@ -8,6 +8,7 @@ library(tidyr)
 library(ggplot2) # For visualization
 library(plotly)
 library(dplyr)   # For data manipulation
+library(highcharter) 
 
 
 # Define server logic
@@ -31,25 +32,30 @@ shinyServer(function(input, output) {
     datatable(salary_data, rownames = FALSE)
   })
   
-  # Render a simple bar plot for demonstration
-  output$bar_plot <- renderPlot({
+  # # Render a simple bar plot for demonstration
+  output$bar_plot <- renderPlotly({
     # Calculate average salary by gender
     average_salary <- data_subset()
-    
-    # Create the bar plot
-    ggplot(average_salary, aes(x = Gender, y = Salary)) + 
-      geom_bar(stat = "identity", fill = "skyblue") +
-      labs(title = "Average Salary by Gender", x = "Gender", y = "Average Salary")
+
+    # Create the bar plot using plot_ly
+    plot_ly(average_salary, x = ~Gender, y = ~Salary, type = "bar",
+            marker = list(color = "skyblue"),
+            hoverinfo = "text",
+            text = ~paste("Average Salary: $", format(Salary, big.mark = ",", scientific = FALSE))) %>%
+      layout(title = "Average Salary by Gender",
+             xaxis = list(title = "Gender"),
+             yaxis = list(title = "Average Salary"),
+             showlegend = FALSE, # Remove legend
+             hoverlabel = list(bgcolor = "white", font = list(color = "black")))
   })
-  
+
   # Render text summary for the first tab
   output$bar_summary <- renderText({
     paste("This bar plot displays the average salary by gender for the selected country:", input$country)
   })
-
+  
   # Render a histogram with average salary on the y-axis
-  # Histogram where user can select gender and then we see average salary for age groups
-  output$histogram_plot <- renderPlot({
+  output$histogram_plot <- renderPlotly({
     # Filter data by selected gender
     filtered_data <- salary_data %>%
       filter(Gender == input$gender)
@@ -70,19 +76,46 @@ shinyServer(function(input, output) {
     # Format the labels of AgeGroup
     avg_salary$AgeGroup <- gsub("\\((\\d+),(\\d+)\\]", "\\1 - \\2", avg_salary$AgeGroup)  # Format labels
     
-    # Define colors based on gender
-    color <- ifelse(input$gender == "Male", "skyblue", "pink")
+    # Define colors for bars
+    colors <- ifelse(input$gender == "Male", "skyblue", "pink")
     
-    # Plot histogram
-    ggplot(avg_salary, aes(x = AgeGroup, y = AvgSalary, fill = input$gender, tooltip = AvgSalary)) +
-      geom_col() +
-      labs(title = paste("Average Salary Histogram for", input$gender),
-           x = "Age Group", y = "Average Salary") +
-      scale_x_discrete(labels = avg_salary$AgeGroup) + 
-      scale_fill_manual(values = c(Male = "skyblue", Female = "pink")) +
-      theme(legend.position = "none") 
-    
+    # Plot histogram using plotly
+    plot_ly(avg_salary, x = ~AgeGroup, y = ~AvgSalary, type = 'bar', color = input$gender, 
+            text = ~paste("Average Salary:", round(AvgSalary, 2)),
+            hoverinfo = 'text', colors = colors) %>%
+      layout(title = paste("Average Salary Histogram for", input$gender),
+             xaxis = list(title = "Age Group"),
+             yaxis = list(title = "Average Salary"),
+             showlegend = FALSE)
   })
+  
+  # Rendering a Scatter Plot
+  output$scatter_plot <- renderPlotly({
+    # Take a random sample of 100 data points
+    sampled_data <- salary_data %>% sample_n(100)
+    
+    # Create separate data frames for Male and Female
+    male_data <- sampled_data[sampled_data$Gender == "Male", ]
+    female_data <- sampled_data[sampled_data$Gender == "Female", ]
+    
+    # Create the scatter plot using plot_ly
+    p <- plot_ly() %>%
+      add_trace(data = male_data, x = ~Education.Level, y = ~Salary, type = "scatter", mode = "markers", 
+                color = I("skyblue"), name = "Male") %>%
+      add_trace(data = female_data, x = ~Education.Level, y = ~Salary, type = "scatter", mode = "markers", 
+                color = I("pink"), name = "Female") %>%
+      layout(title = "Salary vs Education Level",
+             xaxis = list(title = "Education Level", tickmode = "linear", dtick = 1),
+             yaxis = list(title = "Salary"),
+             showlegend = TRUE,
+             margin = list(l = 50, r = 50, b = 50, t = 50), # Adjust margins
+             height = 500,  # Adjust height
+             width = 400)   # Adjust width 
+  
+    # Return the plot
+    return(p)
+  })
+  
   
 })
 

@@ -32,7 +32,7 @@ navbarPage(
                            choices = unique(salary_data$Country))
              ),
              mainPanel(
-               withSpinner(plotOutput("bar_plot")),
+               withSpinner(plotlyOutput("bar_plot")),
                textOutput("bar_summary")  # Add text output for summary
              )
            )
@@ -44,9 +44,15 @@ navbarPage(
         selectInput("gender", "Select Gender:", choices = c("Male", "Female"), selected = "Male")
       ),
       mainPanel(
-        withSpinner(plotOutput("histogram_plot")),
+        withSpinner(plotlyOutput("histogram_plot")),
         textOutput("historgram_summary")  # Add text output for summary
       )
+    )
+  ),
+  tabPanel(
+    "Scatter Plot",
+    fluidPage(
+      withSpinner(plotlyOutput("scatter_plot"))
     )
   ),
   
