@@ -1,7 +1,3 @@
-# Author: Tanushree Koshti
-# Project: Salary Dashboard
-# Date: February 19, 2024
-
 # server.R 
 library(shiny)
 library(tidyr)
@@ -9,7 +5,6 @@ library(ggplot2) # For visualization
 library(plotly)
 library(dplyr)   # For data manipulation
 library(highcharter) 
-
 
 # Define server logic
 shinyServer(function(input, output) {
@@ -25,6 +20,45 @@ shinyServer(function(input, output) {
       group_by(Gender) %>%
       summarise(Salary = mean(Salary))
     return(df)
+  })
+  
+  # Render the summary as HTML for the first column
+  output$summary_col1 <- renderUI({
+    HTML('
+      <div style="background-color: #f8f9fa; padding: 10px; overflow-y: auto; height: calc(100vh - 100px); width: 100%;">
+      <h1>Dataset Information</h1>
+      <h4><p><strong>Dataset Name:</strong> Salary by Job Title and Country</p>
+      <p><strong>Data Source:</strong> Kaggle</p>
+
+      <p><strong>About Dataset:</strong> This dataset provides a comprehensive 
+        collection of salary information from various industries and regions across the globe. 
+        Sourced from reputable employment websites and surveys, it includes details on job titles, 
+        salaries, job sectors, geographic locations, and more. Analyze this data to gain insights 
+        into job market trends, compare compensation across different professions, and make informed
+        decisions about your career or hiring strategies. The dataset is cleaned and preprocessed 
+        for ease of analysis and is available under an open license for research and data 
+        analysis purposes.
+      </p>
+      
+      <br>
+      
+      <p><strong>My Analysis:</strong> I aimed to investigate the disparity in salary 
+        between males and females across various dimensions such as geographical location 
+        (countries), levels of experience and education, as well as age.
+      </p>
+      
+      <br>
+      
+      <p>I utilized various types of visualizations to show the correlation between the following factors: </p>
+      <ul>
+        <li>Location</li>
+        <li>Gender</li>
+        <li>Age</li>
+        <li>Education Levels</li>
+        <li>Experience Levels</li>
+      </ul>
+    </h4></div>
+  ')
   })
   
   # Render data table
@@ -53,7 +87,7 @@ shinyServer(function(input, output) {
              hoverlabel = list(bgcolor = "white", font = list(color = "black")))
   })
   
-
+  
   # Render text summary for the first tab
   output$bar_summary <- renderText({
     paste("This bar plot displays the average salary by gender for the selected country:", input$country)
@@ -93,7 +127,7 @@ shinyServer(function(input, output) {
              yaxis = list(title = "Average Salary"),
              showlegend = FALSE,
              margin = list(l = 50, r = 50, b = 50, t = 75)) # Adjust margins
-
+    
   })
   
   # Rendering a Scatter Plot
@@ -118,7 +152,7 @@ shinyServer(function(input, output) {
              margin = list(l = 50, r = 50, b = 50, t = 100), # Adjust margins
              height = 500,  # Adjust height
              width = 500)   # Adjust width 
-  
+    
     # Return the plot
     return(p)
   })
@@ -174,7 +208,7 @@ shinyServer(function(input, output) {
     labs(title = "Male", x = "Education Level", y = "Years of Experience") +
     theme_classic()
   
-    
+  
   female_plot <- female_sample %>%
     ggplot(aes(x = Education.Level, y = Years.of.Experience, size = Salary, label = Gender)) + 
     geom_point(alpha = 0.75, color = "pink", stroke = 0.2) +
@@ -197,9 +231,4 @@ shinyServer(function(input, output) {
              yaxis = list(range = c(-1, 30)),
              showlegend = FALSE)
   })
-
-  
-  
-  
 })
-
