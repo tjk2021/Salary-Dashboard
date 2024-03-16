@@ -32,22 +32,27 @@ shinyServer(function(input, output) {
     datatable(salary_data, rownames = FALSE)
   })
   
-  # # Render a simple bar plot for demonstration
+  # Render a simple bar plot for demonstration
   output$bar_plot <- renderPlotly({
     # Calculate average salary by gender
     average_salary <- data_subset()
-
+    
+    # Define colors based on gender
+    colors <- ifelse(average_salary$Gender == "Female", "pink", "skyblue")
+    
     # Create the bar plot using plot_ly
     plot_ly(average_salary, x = ~Gender, y = ~Salary, type = "bar",
-            marker = list(color = "skyblue"),
+            marker = list(color = colors), # Use the colors defined above
             hoverinfo = "text",
             text = ~paste("Average Salary: $", format(Salary, big.mark = ",", scientific = FALSE))) %>%
       layout(title = "Average Salary by Gender",
              xaxis = list(title = "Gender"),
              yaxis = list(title = "Average Salary"),
              showlegend = FALSE, # Remove legend
+             margin = list(l = 50, r = 50, b = 50, t = 75), # Adjust margins
              hoverlabel = list(bgcolor = "white", font = list(color = "black")))
   })
+  
 
   # Render text summary for the first tab
   output$bar_summary <- renderText({
@@ -86,7 +91,9 @@ shinyServer(function(input, output) {
       layout(title = paste("Average Salary Histogram for", input$gender),
              xaxis = list(title = "Age Group"),
              yaxis = list(title = "Average Salary"),
-             showlegend = FALSE)
+             showlegend = FALSE,
+             margin = list(l = 50, r = 50, b = 50, t = 75)) # Adjust margins
+
   })
   
   # Rendering a Scatter Plot
@@ -105,16 +112,93 @@ shinyServer(function(input, output) {
       add_trace(data = female_data, x = ~Education.Level, y = ~Salary, type = "scatter", mode = "markers", 
                 color = I("pink"), name = "Female") %>%
       layout(title = "Salary vs Education Level",
-             xaxis = list(title = "Education Level", tickmode = "linear", dtick = 1),
+             xaxis = list(title = "Education Level", tickmode = "linear", dtick = 1, showline = FALSE),
              yaxis = list(title = "Salary"),
-             showlegend = TRUE,
-             margin = list(l = 50, r = 50, b = 50, t = 50), # Adjust margins
+             showlegend = FALSE,
+             margin = list(l = 50, r = 50, b = 50, t = 100), # Adjust margins
              height = 500,  # Adjust height
-             width = 400)   # Adjust width 
+             width = 500)   # Adjust width 
   
     # Return the plot
     return(p)
   })
+  
+  
+  # Rendering a Scatter Plot
+  output$scatter_plot2 <- renderPlotly({
+    # Take a random sample of 100 data points
+    sampled_data <- salary_data %>% sample_n(100)
+    
+    # Create separate data frames for Male and Female
+    male_data <- sampled_data[sampled_data$Gender == "Male", ]
+    female_data <- sampled_data[sampled_data$Gender == "Female", ]
+    
+    # Create the scatter plot using plot_ly
+    p <- plot_ly() %>%
+      add_trace(data = male_data, x = ~Years.of.Experience, y = ~Salary, type = "scatter", mode = "markers", 
+                color = I("skyblue"), name = "Male") %>%
+      add_trace(data = female_data, x = ~Years.of.Experience, y = ~Salary, type = "scatter", mode = "markers", 
+                color = I("pink"), name = "Female") %>%
+      layout(title = "Salary vs Years of Experience",
+             xaxis = list(title = "Years of Experience", tickmode = "linear", dtick = 5, showline = FALSE),
+             yaxis = list(title = "Salary"),
+             showlegend = FALSE,
+             margin = list(l = 50, r = 50, b = 50, t = 100), # Adjust margins
+             height = 500,  # Adjust height
+             width = 500)   # Adjust width 
+    
+    # Return the plot
+    return(p)
+  })
+  
+  # Define reactive expression for filtered data
+  filtered_data <- reactive({
+    salary_data %>%
+      filter(Gender == input$gender)
+  })
+  
+  # Create a random sample of 100 data points for each gender
+  male_sample <- salary_data %>%
+    filter(Gender == "Male") %>%
+    sample_n(100)
+  
+  female_sample <- salary_data %>%
+    filter(Gender == "Female") %>%
+    sample_n(100)
+  
+  # Create separate ggplot objects for each gender
+  male_plot <- male_sample %>%
+    ggplot(aes(x = Education.Level, y = Years.of.Experience, size = Salary, label = Gender)) + 
+    geom_point(alpha = 0.75, color = "skyblue", stroke = 0.2) +
+    scale_size(range = c(3, 8)) +
+    labs(title = "Male", x = "Education Level", y = "Years of Experience") +
+    theme_classic()
+  
+    
+  female_plot <- female_sample %>%
+    ggplot(aes(x = Education.Level, y = Years.of.Experience, size = Salary, label = Gender)) + 
+    geom_point(alpha = 0.75, color = "pink", stroke = 0.2) +
+    scale_size(range = c(3, 8)) +
+    labs(title = "Female", x = "Education Level", y = "Years of Experience") +
+    theme_classic()
+  
+  
+  # Render the ggplotly objects
+  output$bubble_chart_male <- renderPlotly({
+    ggplotly(male_plot, width = 500, height = 500) %>%
+      layout(xaxis = list(range = c(-0.5, 3.5)),
+             yaxis = list(range = c(-1, 30)),
+             showlegend = FALSE)
+  })
+  
+  output$bubble_chart_female <- renderPlotly({
+    ggplotly(female_plot, width = 500, height = 500) %>%
+      layout(xaxis = list(range = c(-0.5, 3.5)),
+             yaxis = list(range = c(-1, 30)),
+             showlegend = FALSE)
+  })
+
+  
   
   
 })
